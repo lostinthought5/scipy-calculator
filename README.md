@@ -1,1 +1,1 @@
-# scipy-calculator
+# sympy-calculator

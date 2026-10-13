@@ -6,69 +6,17 @@ the math library. It's capable of doing algebra and integration quite easily.
 I used the SymPy documentation as a reference!
 '''
 
-import sympy as sm
-from sympy import sin, cos, tan, log, pi, sympify, integrate, E, sqrt, symbols
-from sympy.core.sympify import SympifyError
+import sympy
+from sympy import *
+# from sympy.core.sympify import SympifyError
 
-allowed = {
-'sin': sin,
-'cos': cos,
-'tan': tan,
-'log': log,
-'pi': pi,
-'π': pi,
-'E': E,
-'e': E,
-'sqrt': sqrt,
-}
-
+"""
 class HistoryNode():
 	def __init__(self, order, user_inp, ans):
 		self.order = order
 		self.user_inp = user_inp
 		self.ans = ans
 		self.left, self.right = None, None
-
-class Calculator():
-	def __init__(self):
-		self.history = HistoryBST()
-
-	def arithmetic(self, user_inp):
-		try:
-			ans = sympify(user_inp, locals=allowed).evalf() # evaluates expression with vars only in allowed
-
-			try:
-				if ans == float(user_inp): # no arithmetic to perform
-					print('Please input a valid problem!\n')
-					return None # done since otherwise ans will be printed in main
-
-			except: # must otherwise contain more than 1 char
-				pass
-
-			if ans.free_symbols: # if sympify has defined variables not in "allowed" dict
-				raise SympifyError('Error from having invalid characters inputted!')
-
-			else:
-				self.history.insert(user_inp, float(ans))
-				return float(ans)
-
-		except SympifyError:
-			print('Please input a valid problem!\n')
-
-	def integral(self, user_inp):
-		try:
-			x = symbols('x')
-			expr = sympify(user_inp, locals=allowed) 
-
-			if expr.free_symbols - {x}: # if sympify has defined variables not in "allowed" dict besides x
-				raise SympifyError('Error from having invalid characters inputted!')
-		
-			else:
-				self.history.insert(user_inp, ans)
-				return integrate(expr, x)
-
-		except SimpifyError:
-			print('Error during intergration, please input properly!\n')
 
 class HistoryBST():
 	def __init__(self):
@@ -128,66 +76,128 @@ class HistoryBST():
 	def le_sorted(self):
 		nodes = self.el_sorted()
 		return reversed(nodes) # reverses the order of the list
+"""
+
+
+
+
+class Calculator():
+	def __init__(self):
+		# self.history = HistoryBST()
+		self.active: bool = True
+
+		self.accepted_inputs: dict[str, function] = {
+			'a' : self.arithmetic,
+			'i' : self.integrals,
+			'h' : self.history,
+			'q' : self.quit,
+		}
+
+
+	def start(self):
+		print('Hello and welcome. This calculator may be used for basic math, trigonometry, and basic integrals!')
+
+		while self.active:
+			print("What kind of calculation/option is needed?")
+			user_input: str = input("Arithmetics (a) | Integration (i) |" 
+			                   "History (h) | Exit (q) | ").strip().lower() # corrects input
+
+			if not (user_input in self.accepted_inputs):
+				print("Please enter a valid input!")
+				continue
+
+			self.accepted_inputs[user_input]()
+
+	def quit(self):
+		self.active = False
+
+
+
+	def arithmetic(self):
+		user_problem: str = input("Enter your problem: ")
+
+
+
+		try:
+			ans = sympify(user_input, locals=allowed).evalf() # evaluates expression with vars only in allowed
+
+			try:
+				if ans == float(user_input): # no arithmetic to perform
+					print('Please input a valid problem!\n')
+					return None # done since otherwise ans will be printed in main
+
+			except: # must otherwise contain more than 1 char
+				pass
+
+			if ans.free_symbols: # if sympify has defined variables not in "allowed" dict
+				raise SympifyError('Error from having invalid characters inputted!')
+
+			else:
+				self.history.insert(user_input, float(ans))
+				return float(ans)
+
+		except SympifyError:
+			print('Please input a valid problem!\n')
+
+
+
+	def integrals(self):
+		user_expression: str = input('Input your expression: ')
+
+		try:
+			x = symbols('x')
+			expr = sympify(user_inp, locals=allowed) 
+
+			if expr.free_symbols - {x}: # if sympify has defined variables not in "allowed" dict besides x
+				raise SympifyError('Error from having invalid characters inputted!')
+		
+			else:
+				self.history.insert(user_inp, ans)
+				return integrate(expr, x)
+
+		except SimpifyError:
+			print('Error during intergration, please input properly!\n')
+
+
+
+
 
 if __name__ == '__main__':
 	calculator = Calculator()
-	print('Hello and welcome. This calculator may be used for basic math up to basic integrals!')
+	calculator.start()
+		
+"""
+elif type_input == 'h':
+user_input = input('Display all history or search for solution? (a / s) | ')
+print()
 
-	while True:
-		type_input = input('What kind of calculation/option is needed?\nArithmetics'
-							' (a) / Integration (i) / History (h) / Exit (q) | ').strip().lower() # corrects input
+if user_input == 'a':
+	user_input = input('Display from earliest to latest or vise versa? (e-l / l-e) | ')
+	print()
+
+	if user_input == 'e-l':
+		nodes = calculator.history.el_sorted() # gathers e-l sorted list from history
+
+		for node in nodes:
+			print(f'{node.order}. User problem: {node.user_inp} | Solution: {node.ans}')
+		print()
+		
+	elif user_input == 'l-e':
+		nodes = calculator.history.le_sorted() # gathers l-e sorted list from history
+
+		for node in nodes:
+			print(f'{node.order}. User problem: {node.user_inp} | Solution: {node.ans}')
 		print()
 
-		if type_input == 'a': # should be able to handle any problems containing trigonometry, pi or e
-			user_input = input('Input your problem: ')
-			ans = calculator.arithmetic(user_input)
+	else:
+		print('Please enteer a valid option!\n')
 
-			if ans or ans == 0: # necessary to avoid 'return None' from affecting ans
-				print(f'Solution: {ans}\n')
+elif user_input == 's':
+	ans = float(input("Enter entry's solution to search for: "))
+	node = calculator.history.search(ans) # searches for ans in calculator's history BST
+	print(f'User problem: {node.user_inp} | Solution: {node.ans}\n') # prints entry for provided solution
 
-		elif type_input == 'i':
-			user_input = input('Input your expression: ')
-			ans = calculator.integral(user_input)
-
-			if ans or ans == 0:
-				print(f'Solution: {ans}\n')
-
-		elif type_input == 'h':
-			user_input = input('Display all history or search for solution? (a / s) | ')
-			print()
-
-			if user_input == 'a':
-				user_input = input('Display from earliest to latest or vise versa? (e-l / l-e) | ')
-				print()
-
-				if user_input == 'e-l':
-					nodes = calculator.history.el_sorted() # gathers e-l sorted list from history
-
-					for node in nodes:
-						print(f'{node.order}. User problem: {node.user_inp} | Solution: {node.ans}')
-					print()
-					
-				elif user_input == 'l-e':
-					nodes = calculator.history.le_sorted() # gathers l-e sorted list from history
-
-					for node in nodes:
-						print(f'{node.order}. User problem: {node.user_inp} | Solution: {node.ans}')
-					print()
-
-				else:
-					print('Please enteer a valid option!\n')
-
-			elif user_input == 's':
-				ans = float(input("Enter entry's solution to search for: "))
-				node = calculator.history.search(ans) # searches for ans in calculator's history BST
-				print(f'User problem: {node.user_inp} | Solution: {node.ans}\n') # prints entry for provided solution
-
-			else: 
-				print('Please enter a valid option!\n')
-
-		elif type_input == 'q':
-			print('Goodbye! Thanks for using me!')
-			break
-			
-		else:
-			print('Please enter a valid option!\n')
+else: 
+	print('Please enter a valid option!\n')
+"""
+		

@@ -6,8 +6,8 @@ the math library. It's capable of doing algebra and integration quite easily.
 I used the SymPy documentation as a reference!
 '''
 
-import sympy
-from sympy import *
+import sympy, re
+from sympy import sin, cos, tan, log, pi, sympify, integrate, E, sqrt, symbols
 # from sympy.core.sympify import SympifyError
 
 """
@@ -88,8 +88,8 @@ class Calculator():
 
 		self.accepted_inputs: dict[str, function] = {
 			'a' : self.arithmetic,
-			'i' : self.integrals,
-			'h' : self.history,
+			# 'i' : self.integrals,
+			# 'h' : self.history,
 			'q' : self.quit,
 		}
 
@@ -99,7 +99,7 @@ class Calculator():
 
 		while self.active:
 			print("What kind of calculation/option is needed?")
-			user_input: str = input("Arithmetics (a) | Integration (i) |" 
+			user_input: str = input("Arithmetic & Trigonometry (a) | Integration (i) |" 
 			                   "History (h) | Exit (q) | ").strip().lower() # corrects input
 
 			if not (user_input in self.accepted_inputs):
@@ -107,40 +107,37 @@ class Calculator():
 				continue
 
 			self.accepted_inputs[user_input]()
+			print() # just to differentiate between entries in terminal
 
 	def quit(self):
+		print("Thank you for using me! Good bye!")
 		self.active = False
 
+	def is_valid_input(self, user_input: str) -> bool:
+		new_input = user_input.replace(" ", "").strip() # this removes all spacing whether visible or not
 
+		# using regex here; only permitted characters
+		if not re.match(r'^[0-9x\+\-\*\/\^\(\)\.a-zA-Z]+$', new_input):
+			return False
+		return True
 
 	def arithmetic(self):
 		user_problem: str = input("Enter your problem: ")
 
-
+		if not (self.is_valid_input(user_problem)):
+			print("Please enter a valid input!")
+			return
 
 		try:
-			ans = sympify(user_input, locals=allowed).evalf() # evaluates expression with vars only in allowed
+			expression = sympify(user_problem) # the documentation says sympify uses eval(); do not use in production
+			answer = expression.evalf() 
 
-			try:
-				if ans == float(user_input): # no arithmetic to perform
-					print('Please input a valid problem!\n')
-					return None # done since otherwise ans will be printed in main
+			print(f"{answer:.4f}")
+			
+		except:
+			print("")
 
-			except: # must otherwise contain more than 1 char
-				pass
-
-			if ans.free_symbols: # if sympify has defined variables not in "allowed" dict
-				raise SympifyError('Error from having invalid characters inputted!')
-
-			else:
-				self.history.insert(user_input, float(ans))
-				return float(ans)
-
-		except SympifyError:
-			print('Please input a valid problem!\n')
-
-
-
+'''
 	def integrals(self):
 		user_expression: str = input('Input your expression: ')
 
@@ -157,7 +154,7 @@ class Calculator():
 
 		except SimpifyError:
 			print('Error during intergration, please input properly!\n')
-
+'''
 
 
 

@@ -8,7 +8,7 @@ I used the SymPy documentation as a reference!
 
 import sympy, re
 from sympy import sin, cos, tan, log, pi, sympify, integrate, E, sqrt, symbols
-# from sympy.core.sympify import SympifyError
+from sympy.core.sympify import SympifyError
 
 """
 class HistoryNode():
@@ -79,20 +79,20 @@ class HistoryBST():
 """
 
 
-
-
 class Calculator():
 	def __init__(self):
+		# these values should be private
+
 		# self.history = HistoryBST()
 		self.active: bool = True
+		# self.current_option = None
 
 		self.accepted_inputs: dict[str, function] = {
-			'a' : self.arithmetic,
-			# 'i' : self.integrals,
+			'a' : lambda: self.solver('a'),
+			'i' : lambda: self.solver('i'),
 			# 'h' : self.history,
 			'q' : self.quit,
 		}
-
 
 	def start(self):
 		print('Hello and welcome. This calculator may be used for basic math, trigonometry, and basic integrals!')
@@ -103,7 +103,7 @@ class Calculator():
 			                   "History (h) | Exit (q) | ").strip().lower() # corrects input
 
 			if not (user_input in self.accepted_inputs):
-				print("Please enter a valid input!")
+				print("Please enter a valid option!")
 				continue
 
 			self.accepted_inputs[user_input]()
@@ -121,48 +121,53 @@ class Calculator():
 			return False
 		return True
 
-	def arithmetic(self):
-		user_problem: str = input("Enter your problem: ")
+	def solver(self, input_type: str):
+		callbacks: dict[str: function] = {
+			'a' : self.arithmetic,
+			'i' : self.integrals,
+		}
 
+		user_problem: str = input("Please enter your problem: ")
+		
 		if not (self.is_valid_input(user_problem)):
-			print("Please enter a valid input!")
+			print("Invalid characters detected; only numbers, operators, letters, and parenthesis permitted!")
 			return
 
 		try:
-			expression = sympify(user_problem) # the documentation says sympify uses eval(); do not use in production
-			answer = expression.evalf() 
+			expression = sympify(user_problem) # the documentation says sympify uses eval(); avoid in production
+			callbacks[input_type](expression)
 
-			print(f"{answer:.4f}")
+		except ZeroDivisionError: # should handle different exception cases to print for each
+			print("Cannot divide by zero, please try again!")
+
+		except SympifyError:
+			print("Invalid syntax detected; make sure your problem is properly formatted!")
+
+		except Exception as e:
+			print("BROKE! ERROR: " + e)
 			
-		except:
-			print("")
+	def arithmetic(self, expr: object):
+		answer = expr.evalf()
+		print(f"Solution: {answer:.4f}")
 
-'''
-	def integrals(self):
-		user_expression: str = input('Input your expression: ')
+	def integrals(self, expr: object):
+		x = symbols('x')
 
-		try:
-			x = symbols('x')
-			expr = sympify(user_inp, locals=allowed) 
+		if expr.free_symbols - {x}:
+			print("For basic integrals, only functions of x may be integrated!")
+			return
 
-			if expr.free_symbols - {x}: # if sympify has defined variables not in "allowed" dict besides x
-				raise SympifyError('Error from having invalid characters inputted!')
-		
-			else:
-				self.history.insert(user_inp, ans)
-				return integrate(expr, x)
+		answer = integrate(expr, x)
+		print(f"Solution: {answer}")
 
-		except SimpifyError:
-			print('Error during intergration, please input properly!\n')
-'''
-
-
-
+		# self.history.insert(user_inp, ans)
 
 if __name__ == '__main__':
 	calculator = Calculator()
 	calculator.start()
-		
+
+
+
 """
 elif type_input == 'h':
 user_input = input('Display all history or search for solution? (a / s) | ')

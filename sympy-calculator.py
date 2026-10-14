@@ -110,7 +110,7 @@ class Calculator():
 
 		while self.active:
 			print("What kind of calculation/option is needed?")
-			user_input: str = input("Arithmetics & Trigonometry (deg) - (a) | Integration (i) |" 
+			user_input: str = input("Arithmetics & Trigonometry (rad) - (a) | Integration (i) |" 
 			                   "History (h) | Exit (q) | ").strip().lower() # corrects input
 
 			if not (user_input in self.accepted_inputs):

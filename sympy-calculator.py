@@ -66,16 +66,6 @@ class HistoryBST():
 		self._traversal(node.left, array)
 		array.append(node)
 		self._traversal(node.right, array)
-
-	def el_sorted(self): # sorts based on earliest to latest node
-		nodes = []
-		self._traversal(self.root, nodes)
-		nodes.sort(key=lambda node: node.order) # sorting based on the nodes' order numbers
-		return nodes
-
-	def le_sorted(self):
-		nodes = self.el_sorted()
-		return reversed(nodes) # reverses the order of the list
 """
 
 
@@ -85,10 +75,15 @@ class Calculator():
 		# self.history = HistoryBST()
 		self.timeline = []
 		self.active: bool = True
-		# self.current_option = None
+		self.current_option = None
+
+		self.option_types: dict[str, str] = {
+			'e' : "(Standard Expressions)",
+			'i' : "(Integration)",
+		}
 
 		self.accepted_inputs: dict[str, function] = {
-			'a' : lambda: self.solver('a'),
+			'e' : lambda: self.solver('e'),
 			'i' : lambda: self.solver('i'),
 			# 'h' : self.history,
 			'q' : self.quit,
@@ -102,26 +97,39 @@ class Calculator():
 			'tan' : tan,
 			'log' : log,
 			'sqrt' : sqrt,
-			# maybe add ln too
 		}
 
 	def start(self):
-		print('Hello and welcome. This calculator may be used for basic math, trigonometry, and basic integrals!')
+		print('Hello and welcome. This calculator may be used for basic math, trigonometry, and basic integrals!\n')
 
+		user_input: str = "" # done to update the var rather than define per iteration
 		while self.active:
-			print("What kind of calculation/option is needed?")
-			user_input: str = input("Arithmetics & Trigonometry (rad) - (a) | Integration (i) |" 
-			                   "History (h) | Exit (q) | ").strip().lower() # corrects input
+			if not self.current_option:
+				print("(Menu) - What kind of calculation/option is needed?")
+				user_input = input("Standard Expressions - (e) | Integration (i) | " 
+			                   		"History (h) | Exit (q) | ").strip().lower() # corrects input
 
-			if not (user_input in self.accepted_inputs):
-				print("Please enter a valid option!\n")
-				continue
+				if not (user_input in self.accepted_inputs):
+					print("Please enter a valid option!\n")
+					continue
+
+				print() # for terminal spacing
+
+				if user_input == 'q':
+					self.accepted_inputs['q']()
+					continue
+
+				self.current_option = self.option_types[user_input]
 
 			self.accepted_inputs[user_input]()
 
 	def quit(self):
 		print("Thank you for using me! Good bye!\n")
 		self.active = False
+
+	def withdraw(self):
+		print() # just for consistent terminal spacing
+		self.current_option = None
 
 	def is_valid_input(self, user_input: str) -> bool:
 		new_input = user_input.replace(" ", "").strip() # this removes all spacing whether visible or not
@@ -131,22 +139,27 @@ class Calculator():
 			return False
 		return True
 
-	def solver(self, input_type: str):
+	def solver(self, input_type: str): # input_type = e or i
 		callbacks: dict[str: function] = {
-			'a' : self.arithmetic,
+			'e' : self.arithmetic,
 			'i' : self.integrals,
+			'b' : self.withdraw, # not needed but helpful visually
 		}
 
-		user_problem: str = input("Please enter your problem: ")
+		user_problem: str = input(f"{self.current_option} - Please enter your problem (press b to go back): ")
 		
 		if not (self.is_valid_input(user_problem)):
 			print("Invalid characters detected; only numbers, operators, letters, and parenthesis permitted!\n")
 			return
 
+		if user_problem == 'b':
+			self.withdraw()
+			return
+		
 		try:
 			callbacks[input_type](user_problem)
 
-		except ZeroDivisionError: # should handle different exception cases to print for each
+		except ZeroDivisionError:
 			print("Cannot divide by zero, please try again!\n")
 
 		except SympifyError:
@@ -172,8 +185,6 @@ class Calculator():
 		print(f"Solution: {answer:.4f}\n")
 
 		self.timeline.append(f"{user_input} : Solution: {answer:.4f}")
-
-
 
 	def integrals(self, user_input: str):
 		allowed_operations = self.accepted_operations.copy()
@@ -201,8 +212,7 @@ class Calculator():
 
 		user_input = input("Display all history or search for solution? (a | s): ")
 	'''
-
-
+	
 if __name__ == '__main__':
 	calculator = Calculator()
 	calculator.start()
@@ -216,24 +226,6 @@ print()
 
 if user_input == 'a':
 	user_input = input('Display from earliest to latest or vise versa? (e-l / l-e) | ')
-	print()
-
-	if user_input == 'e-l':
-		nodes = calculator.history.el_sorted() # gathers e-l sorted list from history
-
-		for node in nodes:
-			print(f'{node.order}. User problem: {node.user_inp} | Solution: {node.ans}')
-		print()
-		
-	elif user_input == 'l-e':
-		nodes = calculator.history.le_sorted() # gathers l-e sorted list from history
-
-		for node in nodes:
-			print(f'{node.order}. User problem: {node.user_inp} | Solution: {node.ans}')
-		print()
-
-	else:
-		print('Please enteer a valid option!\n')
 
 elif user_input == 's':
 	ans = float(input("Enter entry's solution to search for: "))

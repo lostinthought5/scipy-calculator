@@ -10,70 +10,10 @@ import sympy, re
 from sympy import sin, cos, tan, log, pi, sympify, integrate, E, sqrt, symbols, Number
 from sympy.core.sympify import SympifyError
 
-"""
-class HistoryNode():
-	def __init__(self, order, user_inp, ans):
-		self.order = order
-		self.user_inp = user_inp
-		self.ans = ans
-		self.left, self.right = None, None
-
-class HistoryBST():
-	def __init__(self):
-		self.root = None
-		self._next_order = 1 # this is to track the order of node insertion
-
-	def insert(self, user_inp, ans):
-		order = self._next_order
-		self._next_order += 1 # increases order number for next node
-		self.root = self._insert(self.root, order, user_inp, ans)
-
-	def _insert(self, node, order, user_inp, ans):
-		if node is None:
-			return HistoryNode(order, user_inp, ans)
-		
-		if ans < node.ans:
-			node.left = self._insert(node.left, order, user_inp, ans)
-
-		elif ans > node.ans:
-			node.right = self._insert(node.right, order, user_inp, ans)
-
-		else:
-			node.ans = ans
-
-		return node
-
-	def search(self, ans):
-		return self._search(self.root, ans)
-
-	def _search(self, node, ans):
-		if node is None:
-			return None
-		
-		elif ans == node.ans:
-			return node
-		
-		elif ans < node.ans:
-			return self._search(node.left, ans)
-		
-		elif ans > node.ans:
-			return self._search(node.right, ans)
-
-	def _traversal(self, node, array): # traversal order irrelevant here, purpose is to create node list
-		if node is None:
-			return
-
-		self._traversal(node.left, array)
-		array.append(node)
-		self._traversal(node.right, array)
-"""
-
-
 class Calculator():
 	def __init__(self):
 		# these values should be private
-		# self.history = HistoryBST()
-		self.timeline = []
+		self.history = []
 		self.active: bool = True
 		self.current_option = None
 
@@ -85,7 +25,7 @@ class Calculator():
 		self.accepted_inputs: dict[str, function] = {
 			'e' : lambda: self.solver('e'),
 			'i' : lambda: self.solver('i'),
-			# 'h' : self.history,
+			'h' : self.history,
 			'q' : self.quit,
 		}
 
@@ -203,15 +143,24 @@ class Calculator():
 
 		self.timeline.append(f"{user_input} : Solution: {answer}")
 
-	'''
 	def history(self):
 		callbacks : dict[str, function] = {
-			'a' : function,
-			's' : function,
+			'a' : {'e' : function, 
+			       'l' : function},
+			       
+			's' : ,
 		} 
 
+		if not self.history:
+			print("There are no recorded problem entries yet!\n")
+
 		user_input = input("Display all history or search for solution? (a | s): ")
-	'''
+		if not user_input in callbacks:
+			print("Please input a valid history option!")
+			return
+
+		
+		callbacks[user_input]
 	
 if __name__ == '__main__':
 	calculator = Calculator()
@@ -229,8 +178,6 @@ if user_input == 'a':
 
 elif user_input == 's':
 	ans = float(input("Enter entry's solution to search for: "))
-	node = calculator.history.search(ans) # searches for ans in calculator's history BST
-	print(f'User problem: {node.user_inp} | Solution: {node.ans}\n') # prints entry for provided solution
 
 else: 
 	print('Please enter a valid option!\n')

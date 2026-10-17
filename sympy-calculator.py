@@ -1,31 +1,25 @@
-# neccessary to install sympy library and set up virtual environment if needed
-
-'''
-For this project, I used the sympy library, basically a better version of
-the math library. It's capable of doing algebra and integration quite easily.
-I used the SymPy documentation as a reference!
-'''
-
 import sympy, re
-from sympy import sin, cos, tan, log, pi, sympify, integrate, E, sqrt, symbols, Number
+from sympy import sin, cos, tan, log, pi, sympify, integrate, E, sqrt, symbols, Number, Integral
+from sympy.core.numbers import ComplexInfinity, NaN
 from sympy.core.sympify import SympifyError
 
 class Calculator():
 	def __init__(self):
 		# these values should be private
-		self.history = []
+		self.history: list = []
 		self.active: bool = True
-		self.current_option = None
+		self.current_option: str = None
 
 		self.option_types: dict[str, str] = {
 			'e' : "(Standard Expressions)",
 			'i' : "(Integration)",
+			'h' : "(History)",
 		}
 
 		self.accepted_inputs: dict[str, function] = {
 			'e' : lambda: self.solver('e'),
 			'i' : lambda: self.solver('i'),
-			'h' : self.history,
+			'h' : self.history_handler,
 			'q' : self.quit,
 		}
 
@@ -86,7 +80,8 @@ class Calculator():
 			'b' : self.withdraw, # not needed but helpful visually
 		}
 
-		user_problem: str = input(f"{self.current_option} - Please enter your problem (press b to go back): ")
+		user_problem: str = input(f"{self.current_option} - Please enter your problem | Go Back (b): ").strip().lower()
+		print()
 		
 		if not (self.is_valid_input(user_problem)):
 			print("Invalid characters detected; only numbers, operators, letters, and parenthesis permitted!\n")
@@ -114,72 +109,93 @@ class Calculator():
 		expression = sympify(user_input, locals = self.accepted_operations, evaluate = False)
 
 		# string issue below may be solved by above; confirm 
-		if isinstance(expression, Number) or expression in (pi, E): # checks if input is a single number, including pi and E
-			print("Single number inputs are not allowed, please try again!\n")
+		if expression.is_Number:
+			print("Single numbers are not allowed, please try again!\n")
+			return
+		
+		if expression.free_symbols: # this is a little complicated, make sure to explain
+			print("Variables are not allowed in standard expressions, please try again!\n")
 			return
 
-		if expression.free_symbols: # this is a little complicated, make sure to explain
+		answer = sympify(user_input, locals = self.accepted_operations) # evaluates the actual answer
+
+		if isinstance(answer, (ComplexInfinity, NaN)):
+			print("Your expression is undefined, please try again!\n")
+			return
+
+		if answer.is_real is False:
+			print("Complex numbers are not allowed, please try again!\n")
+			return
+		elif answer.is_real is None:
 			raise SympifyError("")
 
-		answer = expression.evalf()
 		print(f"Solution: {answer:.4f}\n")
-
-		self.timeline.append(f"{user_input} : Solution: {answer:.4f}")
+		self.history.append(f"Input = {user_input} - Solution = {answer:.4f}")
 
 	def integrals(self, user_input: str):
 		allowed_operations = self.accepted_operations.copy()
 
-		x = symbols('x')
+		x = symbols('x', real = True) # must clarify x is real, otherwise .is_real logic works differently
 		allowed_operations['x'] = x
 
 		expression = sympify(user_input, locals = allowed_operations) # evaluate = False
 
 		if expression.free_symbols - {x}: 
-			print("Only syntax in terms of functions of x is accepted! Please try again!\n")
+			print("Only syntax in terms of functions of x is accepted, please try again!\n")
+			return
+
+		if isinstance(expression, (ComplexInfinity, NaN)):
+			print("Your expression is undefined, please try again!\n")
 			return
 
 		answer = integrate(expression, x)
-		print(f"Solution: {answer}\n")
 
-		self.timeline.append(f"{user_input} : Solution: {answer}")
+		if isinstance(answer, Integral):
+			print("Your expression is undefined, please try again!\n")
+			return
+		
+		if not answer.is_real:
+			print("Complex numbers are not allowed, please try again!\n")
+			return
 
-	def history(self):
-		callbacks : dict[str, function] = {
-			'a' : {'e' : function, 
-			       'l' : function},
-			       
-			's' : ,
-		} 
+		print(f"Solution: {answer} + C\n")
 
+		self.history.append(f"Input = {user_input} - Solution = {answer}")
+
+	def history_handler(self):
 		if not self.history:
 			print("There are no recorded problem entries yet!\n")
+			self.withdraw()
+			return
 
-		user_input = input("Display all history or search for solution? (a | s): ")
-		if not user_input in callbacks:
+		references : dict[str, function] = {
+			'e' : True, 
+			'l' : False,
+			'b' : self.withdraw, # again for visual clarity
+		}
+
+		# can just print History here since it is guaranteed to be that option
+		print("(History) - Would you like to:")
+		user_input = input("Display Earliest Entries (e) | Latest Entries (l) "
+							"| Go Back (b): ").strip().lower()
+		print()
+
+		if not user_input in references:
 			print("Please input a valid history option!")
 			return
 
+		if user_input == 'b': 
+			self.withdraw()
+			return
+
+		print("History:")
 		
-		callbacks[user_input]
-	
+		array = self.history.copy() if references[user_input] else reversed(self.history.copy())
+		for entry in array:
+			print(entry)
+
+		print()
+
 if __name__ == '__main__':
 	calculator = Calculator()
 	calculator.start()
-
-
-
-"""
-elif type_input == 'h':
-user_input = input('Display all history or search for solution? (a / s) | ')
-print()
-
-if user_input == 'a':
-	user_input = input('Display from earliest to latest or vise versa? (e-l / l-e) | ')
-
-elif user_input == 's':
-	ans = float(input("Enter entry's solution to search for: "))
-
-else: 
-	print('Please enter a valid option!\n')
-"""
-		
